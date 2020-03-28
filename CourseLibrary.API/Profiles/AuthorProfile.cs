@@ -17,11 +17,12 @@ namespace CourseLibrary.API.Profiles
                 .ForMember(
                 n => n.Name,
                 op => op.MapFrom(scr => $"{scr.FirstName} {scr.LastName}")
-                         ).ReverseMap();
-            this.CreateMap<Author, AuthorDto>()
+                         )
                 .ForMember(
-                a => a.Age, op => op.MapFrom(scr => scr.DateOfBirth.GetCurrentAge()))
+                a => a.Age,
+                op => op.MapFrom(scr => scr.DateOfBirth.GetCurrentAge()))
                 .ReverseMap();
+               
         }
     }
 }
