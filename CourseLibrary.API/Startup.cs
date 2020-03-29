@@ -28,7 +28,7 @@ namespace CourseLibrary.API
         {
             services.AddControllers(setup =>
             {
-                setup.ReturnHttpNotAcceptable = true; //default false that is accept json only
+                setup.ReturnHttpNotAcceptable = true; //default false that is accept json only must specify content-type and accep
                 }).AddXmlDataContractSerializerFormatters()
             .SetCompatibilityVersion(Microsoft.AspNetCore.Mvc.CompatibilityVersion.Version_3_0);
             #region formatter for core 2.2

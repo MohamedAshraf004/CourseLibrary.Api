@@ -28,7 +28,7 @@ namespace CourseLibrary.API.Controllers
 
         [HttpGet]
         public ActionResult<IEnumerable<CourseDto>> GetCourses(Guid authorId)
-        {
+        {//check modelstate.isvalid not required as apicontroller take care of that
             if (!_courseLibraryRepository.AuthorExists(authorId))
             {
                 return NotFound();
@@ -70,7 +70,7 @@ namespace CourseLibrary.API.Controllers
                                         ,courseToReturn);
 
         }
-        [HttpOptions("~/options")]
+        [HttpOptions("~/courses/options")]
         public IActionResult GetCoursessOptions()
         {
             Response.Headers.Add("Allow", "Get,Post,Option");
