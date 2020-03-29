@@ -70,7 +70,7 @@ namespace CourseLibrary.API.Controllers
                                         ,courseToReturn);
 
         }
-        [HttpOptions]
+        [HttpOptions("~/options")]
         public IActionResult GetCoursessOptions()
         {
             Response.Headers.Add("Allow", "Get,Post,Option");
