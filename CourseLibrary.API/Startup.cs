@@ -12,6 +12,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using Newtonsoft.Json.Serialization;
 using System;
 
 namespace CourseLibrary.API
@@ -29,6 +30,7 @@ namespace CourseLibrary.API
         public void ConfigureServices(IServiceCollection services)
         {
             ConfigurationForRequestAndValidation(services);
+            
 
             services.AddScoped<ICourseLibraryRepository, CourseLibraryRepository>();
 
@@ -87,7 +89,12 @@ namespace CourseLibrary.API
             services.AddControllers(setup =>
             {
                 setup.ReturnHttpNotAcceptable = true; //default false that is accept json only must specify content-type and accep
-            }).AddXmlDataContractSerializerFormatters()
+            }).AddNewtonsoftJson(setupAction =>
+            {
+                setupAction.SerializerSettings.ContractResolver =
+                   new CamelCasePropertyNamesContractResolver();
+            })
+                .AddXmlDataContractSerializerFormatters()
                                .ConfigureApiBehaviorOptions(setupAction =>
                                {
                                    setupAction.InvalidModelStateResponseFactory = context =>
@@ -133,6 +140,7 @@ namespace CourseLibrary.API
                                    };
                                })
                         .SetCompatibilityVersion(Microsoft.AspNetCore.Mvc.CompatibilityVersion.Version_3_0);
+
             #region formatter for core 2.2
             ////services.AddMvc()
             ////  .AddMvcOptions(o =>
