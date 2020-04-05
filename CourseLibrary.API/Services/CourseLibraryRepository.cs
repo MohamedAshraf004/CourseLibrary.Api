@@ -79,7 +79,7 @@ namespace CourseLibrary.API.Services
 
             // the repository fills the id (instead of using identity columns)
             author.Id = Guid.NewGuid();
-
+            //may can assign ids or may not as i like for courses
             foreach (var course in author.Courses)
             {
                 course.Id = Guid.NewGuid();
