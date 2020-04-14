@@ -30,7 +30,37 @@ namespace CourseLibrary.API
         public void ConfigureServices(IServiceCollection services)
         {
             ConfigurationForRequestAndValidation(services);
-            
+            services.AddControllers(setup =>
+            {
+                setup.ReturnHttpNotAcceptable = true; //default false that is accept json only must specify content-type and accep
+            }).AddNewtonsoftJson(setupAction =>
+            {
+                setupAction.SerializerSettings.ContractResolver =
+                   new CamelCasePropertyNamesContractResolver();
+            }).AddXmlDataContractSerializerFormatters()
+                              .ConfigureApiBehaviorOptions(setupAction =>
+                              {
+                                  setupAction.InvalidModelStateResponseFactory = context =>
+                                  {
+                                      var problemDetails = new ValidationProblemDetails(context.ModelState)
+                                      {
+                                          // add additional info not added by default
+                                          Detail = "See the errors field for details.",
+                                          Instance = context.HttpContext.Request.Path,
+                                          Status = StatusCodes.Status422UnprocessableEntity,
+                                          Type = "https://courselibrary.com/modelvalidationproblem",
+                                          Title = "One or more validation errors occurred."
+
+                                      };
+                                      problemDetails.Extensions.Add("traceId", context.HttpContext.TraceIdentifier);
+                                      return new UnprocessableEntityObjectResult(problemDetails)
+                                      {
+                                          ContentTypes = { "application/problem+json" }
+                                      };
+                                  };
+                              })
+                     .SetCompatibilityVersion(Microsoft.AspNetCore.Mvc.CompatibilityVersion.Version_3_0);
+
 
             services.AddScoped<ICourseLibraryRepository, CourseLibraryRepository>();
 
@@ -86,60 +116,60 @@ namespace CourseLibrary.API
         }
         private static void ConfigurationForRequestAndValidation(IServiceCollection services)
         {
-            services.AddControllers(setup =>
-            {
-                setup.ReturnHttpNotAcceptable = true; //default false that is accept json only must specify content-type and accep
-            }).AddNewtonsoftJson(setupAction =>
-            {
-                setupAction.SerializerSettings.ContractResolver =
-                   new CamelCasePropertyNamesContractResolver();
-            })
-                .AddXmlDataContractSerializerFormatters()
-                               .ConfigureApiBehaviorOptions(setupAction =>
-                               {
-                                   setupAction.InvalidModelStateResponseFactory = context =>
-                                   {
-                                       // create a problem details object
-                                       var problemDetailsFactory = context.HttpContext.RequestServices
-                                                       .GetRequiredService<ProblemDetailsFactory>();
-                                       var problemDetails = problemDetailsFactory.CreateValidationProblemDetails(
-                                               context.HttpContext,
-                                               context.ModelState);
+            //services.AddControllers(setup =>
+            //{
+            //    setup.ReturnHttpNotAcceptable = true; //default false that is accept json only must specify content-type and accep
+            //}).AddNewtonsoftJson(setupAction =>
+            //{
+            //    setupAction.SerializerSettings.ContractResolver =
+            //       new CamelCasePropertyNamesContractResolver();
+            //})
+            //    .AddXmlDataContractSerializerFormatters()
+            //                   .ConfigureApiBehaviorOptions(setupAction =>
+            //                   {
+            //                       setupAction.InvalidModelStateResponseFactory = context =>
+            //                       {
+            //                           // create a problem details object
+            //                           var problemDetailsFactory = context.HttpContext.RequestServices
+            //                                           .GetRequiredService<ProblemDetailsFactory>();
+            //                           var problemDetails = problemDetailsFactory.CreateValidationProblemDetails(
+            //                                   context.HttpContext,
+            //                                   context.ModelState);
 
-                                       // add additional info not added by default
-                                       problemDetails.Detail = "See the errors field for details.";
-                                       problemDetails.Instance = context.HttpContext.Request.Path;
+            //                           // add additional info not added by default
+            //                           problemDetails.Detail = "See the errors field for details.";
+            //                           problemDetails.Instance = context.HttpContext.Request.Path;
 
-                                       // find out which status code to use
-                                       var actionExecutingContext =
-                                                         context as Microsoft.AspNetCore.Mvc.Filters.ActionExecutingContext;
+            //                           // find out which status code to use
+            //                           var actionExecutingContext =
+            //                                             context as Microsoft.AspNetCore.Mvc.Filters.ActionExecutingContext;
 
-                                       // if there are modelstate errors & all keys were correctly
-                                       // found/parsed we're dealing with validation errors
-                                       if ((context.ModelState.ErrorCount > 0) &&
-                                                       (actionExecutingContext?.ActionArguments.Count == context.ActionDescriptor.Parameters.Count))
-                                       {
-                                           problemDetails.Type = "https://courselibrary.com/modelvalidationproblem";
-                                           problemDetails.Status = StatusCodes.Status422UnprocessableEntity;
-                                           problemDetails.Title = "One or more validation errors occurred.";
+            //                           // if there are modelstate errors & all keys were correctly
+            //                           // found/parsed we're dealing with validation errors
+            //                           if ((context.ModelState.ErrorCount > 0) &&
+            //                                           (actionExecutingContext?.ActionArguments.Count == context.ActionDescriptor.Parameters.Count))
+            //                           {
+            //                               problemDetails.Type = "https://courselibrary.com/modelvalidationproblem";
+            //                               problemDetails.Status = StatusCodes.Status422UnprocessableEntity;
+            //                               problemDetails.Title = "One or more validation errors occurred.";
 
-                                           return new UnprocessableEntityObjectResult(problemDetails)
-                                           {
-                                               ContentTypes = { "application/problem+json" }
-                                           };
-                                       }
+            //                               return new UnprocessableEntityObjectResult(problemDetails)
+            //                               {
+            //                                   ContentTypes = { "application/problem+json" }
+            //                               };
+            //                           }
 
-                                       // if one of the keys wasn't correctly found / couldn't be parsed
-                                       // we're dealing with null/unparsable input
-                                       problemDetails.Status = StatusCodes.Status400BadRequest;
-                                       problemDetails.Title = "One or more errors on input occurred.";
-                                       return new BadRequestObjectResult(problemDetails)
-                                       {
-                                           ContentTypes = { "application/problem+json" }
-                                       };
-                                   };
-                               })
-                        .SetCompatibilityVersion(Microsoft.AspNetCore.Mvc.CompatibilityVersion.Version_3_0);
+            //                           // if one of the keys wasn't correctly found / couldn't be parsed
+            //                           // we're dealing with null/unparsable input
+            //                           problemDetails.Status = StatusCodes.Status400BadRequest;
+            //                           problemDetails.Title = "One or more errors on input occurred.";
+            //                           return new BadRequestObjectResult(problemDetails)
+            //                           {
+            //                               ContentTypes = { "application/problem+json" }
+            //                           };
+            //                       };
+            //                   })
+            //            .SetCompatibilityVersion(Microsoft.AspNetCore.Mvc.CompatibilityVersion.Version_3_0);
 
             #region formatter for core 2.2
             ////services.AddMvc()

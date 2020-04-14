@@ -79,7 +79,7 @@ namespace CourseLibrary.API.Services
 
             // the repository fills the id (instead of using identity columns)
             author.Id = Guid.NewGuid();
-            //may can assign ids or may not as i like for courses
+            //may can assign ids or may not as i like for courses and author
             foreach (var course in author.Courses)
             {
                 course.Id = Guid.NewGuid();
@@ -157,7 +157,7 @@ namespace CourseLibrary.API.Services
             if (!string.IsNullOrWhiteSpace(authorsResourceParameters.SearchQuery))
             {
                 var searchQuery = authorsResourceParameters.SearchQuery.Trim();
-                collection.Where(c => c.MainCategory.Contains(searchQuery)
+                collection = collection.Where(c => c.MainCategory.Contains(searchQuery)
                 || c.FirstName.Contains(searchQuery)
                 || c.LastName.Contains(searchQuery));
             }
