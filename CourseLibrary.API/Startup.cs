@@ -14,6 +14,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json.Serialization;
 using System;
+using System.IO;
+using System.Reflection;
 
 namespace CourseLibrary.API
 {
@@ -37,6 +39,9 @@ namespace CourseLibrary.API
             {
                 setupAction.SerializerSettings.ContractResolver =
                    new CamelCasePropertyNamesContractResolver();
+                //var contractResolver = setupAction.SerializerSettings.ContractResolver as DefaultContractResolver;
+                //cr.NamingStrategy = null;
+
             }).AddXmlDataContractSerializerFormatters()
                               .ConfigureApiBehaviorOptions(setupAction =>
                               {
@@ -73,6 +78,11 @@ namespace CourseLibrary.API
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
+
+                // Set the comments path for the Swagger JSON and UI.
+                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                c.IncludeXmlComments(xmlPath);
             });
 
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());

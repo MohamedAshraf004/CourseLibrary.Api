@@ -8,6 +8,9 @@ namespace CourseLibrary.API.Models
 {
     public class AuthorForCreationDto
     {
+        /// <summary>
+        /// First Name for the author 
+        /// </summary>
         [Required]
         [MaxLength(50)]
         public string FirstName { get; set; }
