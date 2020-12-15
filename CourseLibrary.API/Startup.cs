@@ -18,7 +18,6 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json.Serialization;
 using System;
-using System.Text;
 
 namespace CourseLibrary.API
 {
@@ -48,11 +47,7 @@ namespace CourseLibrary.API
             {
                 setupAction.SerializerSettings.ContractResolver =
                    new CamelCasePropertyNamesContractResolver();
-                //var contractResolver = setupAction.SerializerSettings.ContractResolver as DefaultContractResolver;
-                //cr.NamingStrategy = null;
-
-            })
-            .AddXmlDataContractSerializerFormatters()
+            }).AddXmlDataContractSerializerFormatters()
                               .ConfigureApiBehaviorOptions(setupAction =>
                               {
                                   setupAction.InvalidModelStateResponseFactory = context =>
@@ -88,6 +83,11 @@ namespace CourseLibrary.API
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
+
+                // Set the comments path for the Swagger JSON and UI.
+                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                c.IncludeXmlComments(xmlPath);
             });
 
             services.AddApiVersioning(options =>
