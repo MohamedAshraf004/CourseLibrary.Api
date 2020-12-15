@@ -13,7 +13,7 @@ namespace CourseLibrary.API.ValidationAttributes
             ValidationContext validationContext)
         {
             if(validationContext.Items.Count > 1)
-            { 
+            {
                 var courses = (IEnumerable<CourseForManipulationDto>)validationContext.ObjectInstance;
                 foreach (var course in courses)
                 {
@@ -26,7 +26,7 @@ namespace CourseLibrary.API.ValidationAttributes
                 }
             }
             else
-            { 
+            {
                 var course = (CourseForManipulationDto)validationContext.ObjectInstance;
                 if (course.Title == course.Description)
                 {

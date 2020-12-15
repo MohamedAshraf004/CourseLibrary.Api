@@ -1,10 +1,11 @@
 ﻿using CourseLibrary.API.Entities;
 using Microsoft.EntityFrameworkCore;
 using System;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace CourseLibrary.API.DbContexts
 {
-    public class CourseLibraryContext : DbContext
+    public class CourseLibraryContext : IdentityDbContext
     {
         public CourseLibraryContext(DbContextOptions<CourseLibraryContext> options)
            : base(options)
@@ -13,6 +14,7 @@ namespace CourseLibrary.API.DbContexts
 
         public DbSet<Author> Authors { get; set; }
         public DbSet<Course> Courses { get; set; }
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

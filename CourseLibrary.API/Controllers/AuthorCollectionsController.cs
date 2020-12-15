@@ -12,6 +12,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CourseLibrary.API.Controllers
 {
+    //[ApiVersion("1.0")]
+    //[Route("api/v{v:apiversion}/authorcollections")] //when use v header i didn't use this attribute i use route for controller only.
     [Route("api/authorcollections")]
     [ApiController]
     public class AuthorCollectionsController : ControllerBase

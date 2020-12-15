@@ -1,19 +1,24 @@
 using AutoMapper;
 using CourseLibrary.API.DbContexts;
+using CourseLibrary.API.Options;
 using CourseLibrary.API.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json.Serialization;
 using System;
+using System.Text;
 
 namespace CourseLibrary.API
 {
@@ -29,15 +34,25 @@ namespace CourseLibrary.API
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            var jwtSettings = new JwtSettings();
+            Configuration.Bind(nameof(jwtSettings), jwtSettings);
+            services.AddSingleton(jwtSettings);
+            services.AddScoped<IIdentityService, IdentityService>();
+
             ConfigurationForRequestAndValidation(services);
             services.AddControllers(setup =>
             {
                 setup.ReturnHttpNotAcceptable = true; //default false that is accept json only must specify content-type and accep
-            }).AddNewtonsoftJson(setupAction =>
+            }).
+            AddNewtonsoftJson(setupAction =>
             {
                 setupAction.SerializerSettings.ContractResolver =
                    new CamelCasePropertyNamesContractResolver();
-            }).AddXmlDataContractSerializerFormatters()
+                //var contractResolver = setupAction.SerializerSettings.ContractResolver as DefaultContractResolver;
+                //cr.NamingStrategy = null;
+
+            })
+            .AddXmlDataContractSerializerFormatters()
                               .ConfigureApiBehaviorOptions(setupAction =>
                               {
                                   setupAction.InvalidModelStateResponseFactory = context =>
@@ -75,6 +90,56 @@ namespace CourseLibrary.API
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
             });
 
+            services.AddApiVersioning(options =>
+            {
+                options.DefaultApiVersion = new ApiVersion(1,0);
+                options.AssumeDefaultVersionWhenUnspecified = true;
+                options.ReportApiVersions = true;
+                options.ApiVersionReader = new HeaderApiVersionReader("X-API-Version"); //for v header
+                //when using query string i comment header option and use in query=> api-version=2.0
+            });
+
+
+            //services.AddAuthentication("Bearer").AddJwtBearer("Bearer", options =>
+            // {
+            //     options.Authority = "https://localhost:51044";
+            //     options.RequireHttpsMetadata = false;
+            //     options.Audience = "hts-api"; //audinace name from identity server 4
+            // });
+
+            var tokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtSettings.Secret)),
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                RequireExpirationTime = false,
+                ValidateLifetime = true
+            };
+
+            services.AddSingleton(tokenValidationParameters);
+
+            services.AddAuthentication(x =>
+            {
+                x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                x.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+                x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+                .AddJwtBearer(x =>
+                {
+                    x.SaveToken = true;
+                    x.TokenValidationParameters = tokenValidationParameters;
+                });
+
+
+            services.AddCors(options =>
+            {
+                options.AddDefaultPolicy(builder =>
+                {
+                    builder.WithOrigins("https://localhost:51044").AllowAnyHeader().AllowAnyMethod();
+                });
+            });
+
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
         }
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -97,7 +162,7 @@ namespace CourseLibrary.API
                     {
                         context.Response.StatusCode = 500;
                         await context.Response.WriteAsync("An unexpected fault happened. Try again later.");
-    
+
                     });
                 });
             }
@@ -107,6 +172,8 @@ namespace CourseLibrary.API
 
             app.UseRouting();
 
+            app.UseCors();
+          //  app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
