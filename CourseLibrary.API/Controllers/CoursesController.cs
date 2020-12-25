@@ -1,5 +1,9 @@
 ﻿using AutoMapper;
+using CourseLibrary.API.Contracts.V1;
+using CourseLibrary.API.Contracts.V1.Filters;
+using CourseLibrary.API.Contracts.V1.Queries;
 using CourseLibrary.API.Entities;
+using CourseLibrary.API.Helpers;
 using CourseLibrary.API.Models;
 using CourseLibrary.API.Services;
 using Microsoft.AspNetCore.JsonPatch;
@@ -20,26 +24,34 @@ namespace CourseLibrary.API.Controllers
     public class CoursesController : ControllerBase
     {
         private readonly ICourseLibraryRepository _courseLibraryRepository;
+        private readonly IUriService _uriService;
         private readonly IMapper _mapper;
 
         public CoursesController(ICourseLibraryRepository courseLibraryRepository,
-            IMapper mapper)
+            IMapper mapper, IUriService uriService = null)
         {
             _courseLibraryRepository = courseLibraryRepository ??
                 throw new ArgumentNullException(nameof(courseLibraryRepository));
             _mapper = mapper ??
                 throw new ArgumentNullException(nameof(mapper));
+            _uriService = uriService;
         }
 
         [HttpGet]
-        public ActionResult<IEnumerable<CourseDto>> GetCourses(Guid authorId)
+        public IActionResult GetCourses(Guid authorId, [FromQuery] PaginationQuery paginationQuery)
         {//check modelstate.isvalid not required as apicontroller take care of that
             if (!_courseLibraryRepository.AuthorExists(authorId))
             {
                 return NotFound();
             }
-            var courses = _courseLibraryRepository.GetCourses(authorId);
-            return Ok(_mapper.Map<IEnumerable<CourseDto>>(courses));
+            var pagination = _mapper.Map<PaginationFilter>(paginationQuery);
+            var courses = _courseLibraryRepository.GetCourses(authorId, pagination);
+            if (pagination == null || pagination.PageNumber < 1 || pagination.PageSize < 1)
+            {
+                return Ok(new PagedResponse<CourseDto>(_mapper.Map<IEnumerable<CourseDto>>(courses)));
+            }
+            var paginationResponse = PaginationHelpers.CreatePaginatedResponse<Course>(_uriService, pagination, courses.ToList());
+            return Ok(paginationResponse);
         }
 
         [HttpGet("{courseId}", Name = "GetCourse")]

@@ -14,6 +14,10 @@ namespace CourseLibrary.API.Contracts.V1
 
         public const string Base = Root + "/" + Version;
 
+        public static class Courses
+        {
+            public const string GetCourses = Base + "/courses/autorId";
+        }
         public static class Posts
         {
             public const string GetAll = Base + "/posts";

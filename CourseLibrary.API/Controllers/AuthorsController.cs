@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using CourseLibrary.API.Contracts.V1;
 using CourseLibrary.API.Entities;
 using CourseLibrary.API.Models;
 using CourseLibrary.API.ResourceParameters;
@@ -28,16 +29,16 @@ namespace CourseLibrary.API.Controllers
         }
 
         [HttpGet()]
-        public ActionResult<IEnumerable<AuthorDto>> GetAuthors(
+        public ActionResult<PagedResponse<AuthorDto>> GetAuthors(
                                 [FromQuery] AuthorResourceParameters authorResourceParameters)
         {
-            if (authorResourceParameters==null)
+            if (authorResourceParameters.MainCategory==null&&authorResourceParameters.SearchQuery ==null)
             {
                 var authorsFromRepo = _courseLibraryRepository.GetAuthors();
-                return Ok(_mapper.Map<IEnumerable<AuthorDto>>(authorsFromRepo));
+                return Ok(new PagedResponse<AuthorDto>(_mapper.Map<IEnumerable<AuthorDto>>(authorsFromRepo)));
             }
              var filteredAuthors = _courseLibraryRepository.GetAuthors(authorResourceParameters);
-            return Ok(_mapper.Map<IEnumerable<AuthorDto>>(filteredAuthors));
+            return Ok(new PagedResponse<AuthorDto>(_mapper.Map<IEnumerable<AuthorDto>>(filteredAuthors)));
 
         }
 

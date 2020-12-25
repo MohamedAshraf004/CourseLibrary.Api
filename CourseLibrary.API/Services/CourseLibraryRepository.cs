@@ -1,4 +1,5 @@
-﻿using CourseLibrary.API.DbContexts;
+﻿using CourseLibrary.API.Contracts.V1.Filters;
+using CourseLibrary.API.DbContexts;
 using CourseLibrary.API.Entities;
 using CourseLibrary.API.ResourceParameters;
 using System;
@@ -53,16 +54,22 @@ namespace CourseLibrary.API.Services
               .Where(c => c.AuthorId == authorId && c.Id == courseId).FirstOrDefault();
         }
 
-        public IEnumerable<Course> GetCourses(Guid authorId)
+        public IEnumerable<Course> GetCourses(Guid authorId, PaginationFilter paginationFilter = null)
         {
             if (authorId == Guid.Empty)
             {
                 throw new ArgumentNullException(nameof(authorId));
             }
-
+            if (paginationFilter ==null)
+            {
+                return _context.Courses
+                       .Where(c => c.AuthorId == authorId)
+                       .OrderBy(c => c.Title).ToList();
+            }
+            var skip = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
             return _context.Courses
                         .Where(c => c.AuthorId == authorId)
-                        .OrderBy(c => c.Title).ToList();
+                        .OrderBy(c => c.Title).Skip(skip).Take(paginationFilter.PageSize).ToList();
         }
 
         public void UpdateCourse(Course course)

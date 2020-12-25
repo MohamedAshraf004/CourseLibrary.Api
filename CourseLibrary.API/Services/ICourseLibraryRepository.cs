@@ -1,4 +1,5 @@
-﻿using CourseLibrary.API.Entities;
+﻿using CourseLibrary.API.Contracts.V1.Filters;
+using CourseLibrary.API.Entities;
 using CourseLibrary.API.ResourceParameters;
 using System;
 using System.Collections.Generic;
@@ -7,7 +8,7 @@ namespace CourseLibrary.API.Services
 {
     public interface ICourseLibraryRepository
     {    
-        IEnumerable<Course> GetCourses(Guid authorId);
+        IEnumerable<Course> GetCourses(Guid authorId,PaginationFilter paginationFilter=null);
         Course GetCourse(Guid authorId, Guid courseId);
         void AddCourse(Guid authorId, Course course);
         void UpdateCourse(Course course);
