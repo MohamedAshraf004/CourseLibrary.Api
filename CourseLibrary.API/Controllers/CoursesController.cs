@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using CourseLibrary.API.Cache;
 using CourseLibrary.API.Contracts.V1;
 using CourseLibrary.API.Contracts.V1.Filters;
 using CourseLibrary.API.Contracts.V1.Queries;
@@ -38,6 +39,7 @@ namespace CourseLibrary.API.Controllers
         }
 
         [HttpGet]
+        [Cached(600)]
         public IActionResult GetCourses(Guid authorId, [FromQuery] PaginationQuery paginationQuery)
         {//check modelstate.isvalid not required as apicontroller take care of that
             if (!_courseLibraryRepository.AuthorExists(authorId))
@@ -55,6 +57,7 @@ namespace CourseLibrary.API.Controllers
         }
 
         [HttpGet("{courseId}", Name = "GetCourse")]
+        [Cached(600)]
         public ActionResult GetCourse(Guid authorId, Guid courseId)
         {
             if (!_courseLibraryRepository.AuthorExists(authorId))

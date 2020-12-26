@@ -1,4 +1,5 @@
 using AutoMapper;
+using CourseLibrary.API.Cache;
 using CourseLibrary.API.DbContexts;
 using CourseLibrary.API.Options;
 using CourseLibrary.API.Services;
@@ -16,6 +17,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json.Serialization;
+using StackExchange.Redis;
 using System;
 using System.IO;
 using System.Reflection;
@@ -155,6 +157,23 @@ namespace CourseLibrary.API
             });
 
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+
+
+            //Caching 
+            var redisCacheSettings = new RedisCacheSettings();
+            Configuration.GetSection(nameof(RedisCacheSettings)).Bind(redisCacheSettings);
+            services.AddSingleton(redisCacheSettings);
+
+            if (!redisCacheSettings.Enabled)
+            {
+                return;
+            }
+
+            services.AddSingleton<IConnectionMultiplexer>(_ =>
+                ConnectionMultiplexer.Connect(redisCacheSettings.ConnectionString));
+            services.AddStackExchangeRedisCache(options => options.Configuration = redisCacheSettings.ConnectionString);
+            services.AddSingleton<IResponseCacheService, ResponseCacheService>();
         }
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
